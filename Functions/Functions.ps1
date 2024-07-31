@@ -389,14 +389,14 @@ Function SC-UpdateCred () {
     ##########################################
     ##  Update saved credential (for O365 connections)
     $hostname = hostname
-    (Get-Credential).Password | ConvertFrom-SecureString | Out-File $psscriptroot\Creds\$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).substring(8).ToUpper())@$((hostname).ToUpper()).txt
+    (Get-Credential).Password | ConvertFrom-SecureString | Out-File $psscriptroot\..\Creds\$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).substring(8).ToUpper())@$((hostname).ToUpper()).txt
 }
 
 Function SC-UpdateMsGraphClientSecret () {
     ##########################################
     ##  Update saved client secret (for MS Graph connections)
     $hostname = hostname
-    (Get-Credential).Password | ConvertFrom-SecureString | Out-File $psscriptroot\Creds\MsGraph-$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).substring(8).ToUpper())@$((hostname).ToUpper()).txt
+    (Get-Credential).Password | ConvertFrom-SecureString | Out-File $psscriptroot\..\Creds\MsGraph-$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).substring(8).ToUpper())@$((hostname).ToUpper()).txt
 }
 
 Function SC-AllowExternal () {
@@ -751,7 +751,7 @@ Function SC-GetHVAssignments {
     # VARIABLE DECLARATIONS
     $username = "scarter"
     $domain = "dlzcorp"
-    $password = Get-Content "$PSScriptRoot\Creds\$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).Substring(8))@$(hostname).txt" | ConvertTo-SecureString
+    $password = Get-Content "$PSScriptRoot\..\Creds\$((([System.Security.Principal.WindowsIdentity]::GetCurrent()).Name).Substring(8))@$(hostname).txt" | ConvertTo-SecureString
 
     # Convert the secure password to plain text
     $plainPassword = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($password))
