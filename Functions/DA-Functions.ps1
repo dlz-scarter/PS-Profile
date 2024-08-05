@@ -400,35 +400,41 @@ Function SC-FreeDiskSpace {
     )
     
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
-
+        # Folders to be processed
         $tempFolders = @(
             "C:\Windows\Temp\",
             "C:\Users\*\Appdata\Local\Temp\",
             "C:\Windows\CCMCache\",
             "C:\Windows\SoftwareDistribution\"
         )
-
+        
+        # Record initial drive utilization
         $diskInfo = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
         $freeSpaceGB = $diskInfo.FreeSpace / 1GB
         $totalSpaceGB = $diskInfo.Size / 1GB
         $freeSpacePercentage = ($diskInfo.FreeSpace / $diskInfo.Size) * 100
         $diskSpaceReport = "Before: {0:N2} GB Free ({1:N2}%) " -f $freeSpaceGB, $freeSpacePercentage
         
+        # Stop WUAUSERV and BITS (necessary for proper handling of C:\Windows\SoftwareDistribution)
         Write-Output "`nStopping WUAUSERV and BITS services"
         Stop-Service -Name WUAUSERV, BITS -Force
+        
+        # Iterate through each folder, deleting everything, silently continuing if files are still open
         ForEach ($folder In $tempFolders) {
             Write-Output "   Processing $folder"
             Stop-Service -Name WUAUSERV, BITS -Force
             Get-ChildItem -Path $folder -Recurse -Force | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         }
+        
+        # Restart WUAUSERV and BITS
         Write-Output "Starting WUAUSERV and BITS services`n"
         Start-Service -Name WUAUSERV, BITS
         
+        # Re-check drive utilization and output results to the console
         $diskInfo = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
         $freeSpaceGB = $diskInfo.FreeSpace / 1GB
         $freeSpacePercentage = ($diskInfo.FreeSpace / $diskInfo.Size) * 100
         $diskSpaceReport += "`nAfter:  {0:N2} GB Free ({1:N2}%)`n" -f ($diskInfo.FreeSpace / 1GB), ($diskInfo.FreeSpace / $diskInfo.Size * 100)
-        
         Write-Output $diskSpaceReport
     }
 }
