@@ -398,38 +398,37 @@ Function SC-FreeDiskSpace {
         [string]
         $ComputerName
     )
-    $tempFolders = @(
-        "C:\Windows\Temp\*",
-        "C:\Users\*\Appdata\Local\Temp\*",
-        "C:\Windows\CCMCache\*",
-        "C:\Windows\SoftwareDistribution\*"
-    )
+    
     Invoke-Command -ComputerName $ComputerName -ScriptBlock {
+
+        $tempFolders = @(
+            "C:\Windows\Temp\",
+            "C:\Users\*\Appdata\Local\Temp\",
+            "C:\Windows\CCMCache\",
+            "C:\Windows\SoftwareDistribution\"
+        )
+
         $diskInfo = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
         $freeSpaceGB = $diskInfo.FreeSpace / 1GB
         $totalSpaceGB = $diskInfo.Size / 1GB
         $freeSpacePercentage = ($diskInfo.FreeSpace / $diskInfo.Size) * 100
         $diskSpaceReport = "Before: {0:N2} GB Free ({1:N2}%) " -f $freeSpaceGB, $freeSpacePercentage
-
-        ForEach ($folder In $tempfolders) {
-            Write-Output "Processing $folder"
-            If ($folder -eq "C:\Windows\SoftwareDistribution") {
-                Write-Output "Stopping WUAUSERV and BITS services"
-                Stop-Service -Name WUAUSERV, BITS -Force
-                Remove-Item $folder -Force -Recurse -ErrorAction SilentlyContinue
-                Write-Output "Stopping WUAUSERV and BITS services"
-                Start-Service -Name WUAUSERV, BITS
-            }
-            Else {
-                Remove-Item $folder -Force -Recurse -ErrorAction SilentlyContinue
-            }
+        
+        Write-Output "`nStopping WUAUSERV and BITS services"
+        Stop-Service -Name WUAUSERV, BITS -Force
+        ForEach ($folder In $tempFolders) {
+            Write-Output "   Processing $folder"
+            Stop-Service -Name WUAUSERV, BITS -Force
+            Get-ChildItem -Path $folder -Recurse -Force | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
         }
-
+        Write-Output "Starting WUAUSERV and BITS services`n"
+        Start-Service -Name WUAUSERV, BITS
+        
         $diskInfo = Get-WmiObject Win32_LogicalDisk -Filter "DeviceID='C:'"
         $freeSpaceGB = $diskInfo.FreeSpace / 1GB
         $freeSpacePercentage = ($diskInfo.FreeSpace / $diskInfo.Size) * 100
-        $diskSpaceReport += "`nAfter:  {0:N2} GB Free ({1:N2}%) " -f ($diskInfo.FreeSpace / 1GB), ($diskInfo.FreeSpace / $diskInfo.Size * 100)
-
+        $diskSpaceReport += "`nAfter:  {0:N2} GB Free ({1:N2}%)`n" -f ($diskInfo.FreeSpace / 1GB), ($diskInfo.FreeSpace / $diskInfo.Size * 100)
+        
         Write-Output $diskSpaceReport
     }
 }
