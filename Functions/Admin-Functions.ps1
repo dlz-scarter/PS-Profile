@@ -176,6 +176,9 @@ Function SC-UpdateEveryModule {
         [parameter()]
         [switch]
         $SkipMajorVersion,
+		[parameter()]
+        [switch]
+        $SkipPublisherCheck = $false,
         [parameter()]
         [switch]
         $KeepOldModuleVersions,
@@ -210,8 +213,13 @@ Function SC-UpdateEveryModule {
                             "Update-Module"
                         )
                     ) {
-                        Update-Module $_.Name -Scope AllUsers -ErrorAction Stop -Force
-                        Write-Output "   $($_.Name) has been updated"
+						If ($SkipPublisherCheck -eq $true) {
+							Install-Module $_.Name -Scope AllUsers -ErrorAction Stop -SkipPublisherCheck -Force
+						}
+						Else {
+							Install-Module $_.Name -Scope AllUsers -ErrorAction Stop -Force
+						}
+					    Write-Output "   $($_.Name) has been updated"
                     }
                 }
                 Catch {
