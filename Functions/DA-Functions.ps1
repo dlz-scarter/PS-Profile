@@ -269,7 +269,7 @@ Function SC-DisableAccount {
         # Remove manager from User account
         Write-Output "MANAGER NAME:`n-------------" | Out-File -Encoding ascii -FilePath $FilePath\$FileName -Append
         If ($User.Manager -ne $null) {
-            Write-Output "`nClearing Manager attribute"
+            Write-Output "`nClearing manager attribute"
             Write-Output "$((Get-ADUser ($User.Manager)).name)" | Out-File -Encoding ascii -FilePath $FilePath\$FileName -Append
             Set-ADUser $User -Manager $null
         }
@@ -279,7 +279,7 @@ Function SC-DisableAccount {
         
         # Convert mailbox to shared
         If ((Get-Mailbox $User.SAMAccountName).RecipientTypeDetails -ne "SharedMailbox") {
-            Write-Output "`nConverting Mailbox to shared"
+            Write-Output "`nConverting user mailbox to shared mailbox"
             Set-Mailbox -Identity $User.SAMAccountName -Type Shared -WarningAction SilentlyContinue
         }
         
@@ -307,7 +307,7 @@ Function SC-DisableAccount {
         
         # Disable account
         If ($User.Enabled -eq $true) {
-            Write-Output "`nDisabling Account"
+            Write-Output "`nDisabling account"
             Disable-ADAccount $User.SAMAccountName
             
         }
