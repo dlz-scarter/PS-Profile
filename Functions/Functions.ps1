@@ -84,14 +84,6 @@ Function SC-LoadModule {
     }
 }
 
-Function Run-Step([string]$Description, [ScriptBlock]$script) {
-    ##########################################
-    ##  Visual Feedback for loading module
-    Write-Host -NoNewline "Loading " $Description.PadRight(20)
-    & $script
-    Write-Host
-}
-
 Function Is-Elevated {
     ##########################################
     ##  Set Titlebar
