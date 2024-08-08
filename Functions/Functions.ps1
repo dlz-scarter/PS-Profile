@@ -69,14 +69,42 @@ Function SC-LoadModule {
     param(
         [parameter(Mandatory=$true)] [string]$Module
     )
+
     Try {
         Import-Module $Module -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
     }
     Catch [System.IO.FileNotFoundException] {
         Try {
-            Write-Output "$Module not found, attempting to install..."
-            Install-Module -Name $Module -Scope CurrentUser -AllowClobber -Confirm:$False -Force -ErrorAction 'Stop'
-            Import-Module $Module
+            Write-Output "`n$Module not found.  Attempting to install."
+            
+			# Define the path for the error log
+            $errorLogPath = "$env:TEMP\install_error.log"
+			
+			# Start the elevated PowerShell process and wait for it to complete
+			Start-Process powershell `
+				-ArgumentList "-NoProfile -Command `
+					Write-Host Installing $Module, please wait...; `
+					Install-Module -Name $Module -Scope AllUsers -AllowClobber -Force -ErrorVariable err; `
+					if (`$err) { `$err.Exception.Message | Out-File -FilePath $errorLogPath }" `
+				-Verb RunAs `
+				-WindowStyle Minimized `
+				-Wait
+			
+			# Check for the error log file and display its contents
+            if (Test-Path $errorLogPath) {
+                $errorMessages = Get-Content -Path $errorLogPath
+                if ($errorMessages) {
+                    Write-Output "`nErrors encountered during installation:`n"
+                    Write-Output $errorMessages`n
+                }
+                Remove-Item -Path $errorLogPath -Force
+            }
+			else {
+				Write-Output "$Module has been successfully installed.`n"
+			}
+			
+            # Attempt to import the module again
+            Import-Module $Module -ErrorAction 'Stop' -WarningAction 'SilentlyContinue'
         }
         Catch [Exception] {
             $_.message
