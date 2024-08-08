@@ -792,3 +792,29 @@ Function SC-GetvGPUSummary {
         Write-Host ("`nCapacity for new GenProd VMs: {0,3}`n" -f $($AvailableVRAMTotal / 4))
     }
 }
+##########################################
+##  Privilege Elevation - Local Admin
+
+function SC-Sudo {
+    param (
+        [string]$Command = ""
+    )
+
+    # Start a new elevated PowerShell process
+    Start-Process powershell -ArgumentList "-NoExit -Command `"& { $Command }`"" -Verb RunAs
+}
+
+##########################################
+##  Privilege Elevation - Domain Admin
+
+function SC-DASudo {
+    param (
+        [string]$WorkingDirectory = $pwd.Path
+    )
+
+    # Construct the command to start PowerShell using the smart card
+    $command = "powershell.exe -NoProfile -NoExit -Command ""Set-Location -Path $env:homedrive$env:homepath"""
+
+    # Use runas with /smartcard to prompt for smart card PIN and start the session
+    Start-Process -FilePath "C:\Windows\System32\runas.exe" -ArgumentList "/user:dlzcorp\admin-scarter /smartcard ""powershell.exe -NoLogo""" -WorkingDirectory $WorkingDirectory
+}
